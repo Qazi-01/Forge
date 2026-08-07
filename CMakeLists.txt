@@ -11,6 +11,7 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 add_executable(forge
     src/main.c
+    src/token.c
 )
 
 target_include_directories(forge
