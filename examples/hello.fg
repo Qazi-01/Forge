@@ -1,0 +1,5 @@
+let message = "Hello, Forge!"
+let number = 42
+
+// A comment
+number/10

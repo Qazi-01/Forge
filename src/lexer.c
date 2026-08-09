@@ -1,4 +1,5 @@
 #include "lexer.h"
+#include "token.h"
 
 static char advance(Lexer *lexer)
 {
@@ -75,15 +76,28 @@ static int is_digit(char character)
     return character >= '0' && character <= '9';
 }
 
+static Token error_token(Lexer *lexer)
+{
+    Token token;
+
+    token.type = TOKEN_ERROR;
+    token.start = lexer->start;
+    token.length = (int)(lexer->current - lexer->start);
+    token.line = lexer->line;
+    token.column = lexer->column - token.length;
+
+    return token;
+}
+
 static Token string(Lexer *lexer)
 {
     while (peek(lexer) != '"' && peek(lexer) != '\0')
     {
         if (peek(lexer) == '\n')
         {
+            advance(lexer);
             lexer->line++;
             lexer->column = 1;
-            advance(lexer);
         }
 
         else
@@ -92,10 +106,12 @@ static Token string(Lexer *lexer)
         }
     }
 
-    if (peek(lexer) == '"')
+    if (peek(lexer) == '\0')
     {
-        advance(lexer);
+        return error_token(lexer);
     }
+
+    advance(lexer);
 
     Token token;
 
@@ -219,8 +235,20 @@ Token lexer_next_token(Lexer *lexer)
         case '*': token.type = TOKEN_STAR;
         break;
 
-        case '/': token.type = TOKEN_SLASH;
-        break;
+        case '/':
+            if (match(lexer, '/'))
+            {
+                while (peek(lexer) != '\n' && peek(lexer) != '\0')
+                {
+                    advance(lexer);
+                }
+
+                return lexer_next_token(lexer);
+            }
+
+            token.type = TOKEN_SLASH;
+            break;
+            
 
         case '(': token.type = TOKEN_LEFT_PAREN;
         break;
@@ -314,8 +342,7 @@ Token lexer_next_token(Lexer *lexer)
                 return identifier(lexer);
             }
             
-            token.type = TOKEN_EOF;
-            break;
+            return error_token(lexer);
     }
 
     return token;
