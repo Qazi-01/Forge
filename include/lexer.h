@@ -10,6 +10,8 @@ typedef struct {
 
     int line;
     int column;
+
+    const char *error_message;
 } Lexer;
 
 void lexer_init(Lexer *lexer, const char *source);

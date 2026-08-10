@@ -53,6 +53,42 @@ static char *read_file(const char *path)
     return buffer;
 }
 
+static void print_source_line(const char *source, int line, int column)
+{
+    const char *current = source;
+    int current_line = 1;
+
+    while (current_line < line && *current != '\0')
+    {
+        if (*current == '\n')
+        {
+            current_line++;
+        }
+
+        current++;
+    }
+
+    fprintf(stderr, "| \n");
+    fprintf(stderr, "%d | ", line);
+
+    while (*current != '\0' && *current != '\n')
+    {
+        fputc(*current, stderr);
+        current++;
+    }
+
+    fprintf(stderr, "\n");
+    fprintf(stderr, "  | ");
+
+    for (int i = 1; i < column; i++)
+    {
+        fputc(' ', stderr);
+    }
+
+    fprintf(stderr, "^\n");
+    fprintf(stderr, "|\n");
+}
+
 static int tokenize_file(const char *path)
 {
     char *source = read_file(path);
@@ -73,6 +109,9 @@ static int tokenize_file(const char *path)
 
         if (token.type == TOKEN_ERROR)
         {
+            fprintf(stderr, "Error: %s '%.*s'\n", lexer.error_message, token.length, token.start);
+            fprintf(stderr, "--> %s:%d:%d\n", path, token.line, token.column);
+            print_source_line(source, token.line, token.column);
             free(source);
             return 1;
         }

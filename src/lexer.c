@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 #include "lexer.h"
 #include "token.h"
 
@@ -40,13 +42,16 @@ static int match(Lexer *lexer, char expected)
     return 1;
 }
 
-void lexer_init(Lexer *lexer, const char *source) {
+void lexer_init(Lexer *lexer, const char *source)
+{
     lexer->source = source;
     lexer->start = source;
     lexer->current = source;
     
     lexer->line = 1;
     lexer->column = 1;
+
+    lexer->error_message = NULL;
 }
 
 static Token number(Lexer *lexer)
@@ -188,9 +193,9 @@ static Token identifier(Lexer *lexer)
     return token;
 }
 
-Token lexer_next_token(Lexer *lexer)
+static void skip_whitespace_and_comments(Lexer *lexer)
 {
-    while(1)
+    while (1)
     {
         char character = peek(lexer);
 
@@ -199,7 +204,7 @@ Token lexer_next_token(Lexer *lexer)
             advance(lexer);
             continue;
         }
-
+        
         if (character == '\n')
         {
             advance(lexer);
@@ -208,8 +213,26 @@ Token lexer_next_token(Lexer *lexer)
             continue;
         }
 
+        if (character == '/' && peek_next(lexer) == '/')
+        {
+            advance(lexer);
+            advance(lexer);
+
+            while (peek(lexer) != '\n' && peek(lexer) != '\0')
+            {
+                advance(lexer);
+            }
+
+            continue;
+        }
+
         break;
     }
+}
+
+Token lexer_next_token(Lexer *lexer)
+{
+    skip_whitespace_and_comments(lexer);
 
     lexer->start = lexer->current;
     char character = advance(lexer);
@@ -235,21 +258,9 @@ Token lexer_next_token(Lexer *lexer)
         case '*': token.type = TOKEN_STAR;
         break;
 
-        case '/':
-            if (match(lexer, '/'))
-            {
-                while (peek(lexer) != '\n' && peek(lexer) != '\0')
-                {
-                    advance(lexer);
-                }
-
-                return lexer_next_token(lexer);
-            }
-
-            token.type = TOKEN_SLASH;
-            break;
+        case '/': token.type = TOKEN_SLASH;
+        break;
             
-
         case '(': token.type = TOKEN_LEFT_PAREN;
         break;
 
@@ -342,6 +353,7 @@ Token lexer_next_token(Lexer *lexer)
                 return identifier(lexer);
             }
             
+            lexer->error_message = "unexpected character";
             return error_token(lexer);
     }
 
