@@ -5,6 +5,8 @@
 #include "lexer.h"
 #include "token.h"
 
+#define FORGE_VERSION "0.2.0"
+
 static char *read_file(const char *path)
 {
     FILE *file = fopen(path, "rb");
@@ -90,6 +92,8 @@ static void print_usage(const char *program)
     printf("Forge - programming language toolkit\n\n");
     printf("Usage:\n");
     printf("  %s tokenize <file>\n", program);
+    printf("  %s version\n", program);
+    printf("  %s help\n", program);
 }
 
 int main(int argc, char **argv)
@@ -98,6 +102,18 @@ int main(int argc, char **argv)
     {
         print_usage(argv[0]);
         return 1;
+    }
+
+    if (strcmp(argv[1], "version") == 0)
+    {
+        printf("Forge version %s\n", FORGE_VERSION);
+        return 0;
+    }
+
+    if (strcmp(argv[1], "help") == 0)
+    {
+        print_usage(argv[0]);
+        return 0;
     }
 
     if (strcmp(argv[1], "tokenize") == 0)
