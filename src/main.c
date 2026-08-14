@@ -4,8 +4,9 @@
 
 #include "lexer.h"
 #include "token.h"
+#include "parser.h"
 
-#define FORGE_VERSION "0.2.0"
+#define FORGE_VERSION "0.3.0"
 
 static char *read_file(const char *path)
 {
@@ -126,11 +127,40 @@ static int tokenize_file(const char *path)
     return 0;
 }
 
+static int parse_file(const char *path)
+{
+    char *source = read_file(path);
+
+    if (source == NULL)
+    {
+        return 1;
+    }
+
+    Lexer lexer;
+    lexer_init(&lexer, source);
+
+    Parser parser;
+    parser_init(&parser, &lexer);
+
+    if (!parser_parse_program(&parser))
+    {
+        fprintf(stderr, "Parse error: %s\n""--> %s:%d:%d\n", parser.error_message != NULL ? parser.error_message : "invalid syntax", path, parser.current.line, parser.current.column);
+        print_source_line(source, parser.current.line, parser.current.column);
+        free(source);
+        return 1;
+    }
+
+    printf("Parse successful!\n");
+    free(source);
+    return 0;
+}
+
 static void print_usage(const char *program)
 {
     printf("Forge - programming language toolkit\n\n");
     printf("Usage:\n");
     printf("  %s tokenize <file>\n", program);
+    printf("  %s parse <file>\n", program);
     printf("  %s version\n", program);
     printf("  %s help\n", program);
 }
@@ -164,6 +194,17 @@ int main(int argc, char **argv)
         }
 
         return tokenize_file(argv[2]);
+    }
+
+    if (strcmp(argv[1], "parse") == 0)
+    {
+        if (argc != 3)
+        {
+            fprintf(stderr, "Usage: %s parse <file>\n", argv[0]);
+            return 1;
+        }
+
+        return parse_file(argv[2]);
     }
 
     fprintf(stderr, "Unknown command: %s\n\n", argv[1]);
