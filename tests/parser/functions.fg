@@ -1,0 +1,10 @@
+fn add(a, b) {
+    return a + b;
+}
+
+fn empty() {
+    return;
+}
+
+let x = add(10, 20);
+add(x, 5);
